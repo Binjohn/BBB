@@ -1,6 +1,6 @@
 /**
  * BBB = Big Brother Buster
- * @version 1.9
+ * @version 1.12
  */
 
 javascript: (function() {
@@ -13,40 +13,40 @@ javascript: (function() {
   if (mobile.includes("facebook.com")) {
     // facebook 01 story.php and permalink.php -> posts/
     if ((m = mobile.match(/(?:story|permalink)\.php.+\bstory_fbid=(\d+).+\bid=(\d+)/)) != null) {
-      // eg. story.php?story_fbid=<post>&id=<user|page>
+      // e.g. story.php?story_fbid=<post>&id=<user|page>
       desktop = "https://facebook.com/" + m[2] + "/posts/" + m[1];
         /* /posts/FBID is better than /FBID directly.
          * /posts/FBID stays in the post itself, but
          * /FBID redirects to theater mode / video player. */
         /* another scheme is "permalink.php", but "posts" is shorter */
     // facebook 02 photos/ -> posts/
-    } else if ((m = mobile.match(/([\w.]+?)\/photos\/(?:a|pcb|gm)\.(\d+)\/(\d+)/)) != null) {
-      // eg. <page-name>/photos/a.<album>/<photo>
-      // eg. <page-name>/photos/pcb.<set-post>/<photo>
-      // eg. <page-name>/photos/gm.<set-group>/<photo>
+    } else if ((m = mobile.match(/([\w.]+)\/photos\/(?:a|pcb|gm)\.(\d+)\/(\d+)/)) != null) {
+      // e.g. <page-name>/photos/a.<album>/<photo>
+      // e.g. <page-name>/photos/pcb.<set-post>/<photo>
+      // e.g. <page-name>/photos/gm.<set-group>/<photo>
       desktop = "https://facebook.com/" + m[1] + "/posts/" + m[3];
     // facebook 03 photo.php with user/page id -> posts/
     // similar to facebook 01
     } else if ((m = mobile.match(/photo\.php.+\bfbid=(\d+).+\bid=(\d+)/)) != null) {
-      // eg. photo.php?fbid=<photo>&id=<user|page>&set=pcb.<set-post>
+      // e.g. photo.php?fbid=<photo>&id=<user|page>&set=pcb.<set-post>
       /* appears only in mobile browsers */
       desktop = "https://facebook.com/" + m[2] + "/posts/" + m[1];
     // facebook 04 photo.php without user/page id -> /FBID
     } else if ((m = mobile.match(/photo\.php.+\bfbid=(\d+).+\bset=(?:pcb|gm)\.(\d+)/)) != null) {
-      // eg. photo.php?fbid=<photo>&set=pcb.<set-post>
-      // eg. photo.php?fbid=<photo>&set=gm.<set-group>
+      // e.g. photo.php?fbid=<photo>&set=pcb.<set-post>
+      // e.g. photo.php?fbid=<photo>&set=gm.<set-group>
       desktop = "https://facebook.com/" + m[2];
         // exclude set=a.<album> sincee it redirects to theater mode
     // facebook 05 view=permalink -> /FBID
     } else if ((m = mobile.match(/(?:groups|events).+\b(\d+).+\bview=permalink.+\bid=(\d+)/)) != null) {
-      // eg. groups/<group>?view=permalink&id=<post>
-      // eg. events/<event>?view=permalink&id=<post>
+      // e.g. groups/<group>?view=permalink&id=<post>
+      // e.g. events/<event>?view=permalink&id=<post>
       desktop = "https://facebook.com/" + m[2];
     } else if (mobile.includes(s = "m.facebook.com")) {
       desktop = mobile.replace(s, s.replace("m.", "www."));
     }
   // case 01 // m. -> www.
-  } else if ((m = mobile.match(/(.*)m\.((?:appledaily|cna|imdb|mobile01)\.(?:com).*)/)) != null) {
+  } else if ((m = mobile.match(/(.*)m\.((?:appledaily|cna|imdb|mobile01|104)\.(?:com).*)/)) != null) {
     desktop = m[1] + "www." + m[2];
   // case 02 // m. -> ""
   } else if ((m = mobile.match(/(.*)m\.(news\.(?:ebc|sina)\.(?:net|com))/) || mobile.match(/(.*)m\.((?:wikipedia)\.(?:org).*)/)) != null) {
@@ -60,9 +60,19 @@ javascript: (function() {
   // nownews
   } else if (mobile.includes(s = "https://m.nownews.com/news")) {
     desktop = mobile.replace(s, "http://www.nownews.com/n/1970/01/01");
+  // ettoday
+  } else if ((m = mobile.match(/(.*\/\/).*(ettoday.net\/).+amp_news.php.+news_id=(\d+).*/)) != null) {
+    // e.g. www.ettoday.net/amp/amp_news.php?news_id=1504136
+    // e.g. travel.ettoday.net/amp/amp_news.php?news_id=1440576
+    desktop = m[1] + "www." + m[2] + "news/19700101/" + m[3] + ".html";
+  // yahoo news
+  } else if ((m = mobile.match(/(.*tw\.)mobi(\.yahoo\.com\/)([^\/]+)\/?(.*)/)) != null ) {
+    // e.g. tw.mobi.yahoo.com/sports
+    desktop = m[1] + m[3] + m[2] + "news/" + m[4];
   // douban movie
-  } else if ((m = mobile.match(/(.*)m(\.douban\.com\/)(movie)\/(.*)/)) != null) {
-    desktop = m[1] + m[3] + m[2] + m[4];
+  } else if ((m = mobile.match(/(.*)m\.(douban\.com\/)(movie)\/?(.*)/)) != null) {
+    // e.g. m.douban.com/movie/subject/26788667
+    desktop = m[1] + m[3] + "." + m[2] + m[4];
   }
   // redirect to desktop
   if (desktop !== undefined) {
@@ -73,8 +83,17 @@ javascript: (function() {
 /**
  * changelog
  *
+ * @version 1.12 2019-09-10
+ * + Support ettoday.net amp_news.php.
+ *
+ * @version 1.11 2019-04-10
+ * + Support m.104.com.tw.
+ *
+ * @version 1.10 2019-01-25
+ * + Support tw.mobi.yahoo.com.
+ *
  * @version 1.9 2018-09-05
- * + Supports Facebook permalink.php.
+ * + Support Facebook permalink.php.
  * x Can leave Facebook photo.php theater mode if URL contains user/page ID.
  * x Now handles m.facebook.com correctly due to a change @since 1.8.
  *
@@ -84,7 +103,7 @@ javascript: (function() {
  * + Support Facebook view=permalink posts.
  *
  * @version 1.7 2018-07-28
- * x Declares local variables explicitly.
+ * x Declare local variables explicitly.
  *
  * @version 1.6 2018-06-18
  * + Support mobile01.com.
